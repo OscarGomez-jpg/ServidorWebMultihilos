@@ -5,6 +5,8 @@ import java.net.Socket;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class HttpRequest implements Runnable {
     final static String CRLF = "\r\n";
@@ -29,12 +31,22 @@ public class HttpRequest implements Runnable {
         BufferedWriter output = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
         BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-        String line = "";
+        String line;
         while ((line = input.readLine()) != null && !line.isEmpty()) {
             StringTokenizer parseLine = new StringTokenizer(line);
             String method = parseLine.nextToken();
+            System.out.println("Request: " + line);
             if (method.equals("GET")) {
                 String fileName = parseLine.nextToken();
+                String regex = "^\\s*/\\s*$";
+
+                Pattern pattern = Pattern.compile(regex);
+                Matcher matcher = pattern.matcher(fileName);
+
+                if (matcher.matches()) {
+                    fileName = "/index.html";
+                }
+
                 fileName = "." + fileName;
                 System.out.println(fileName);
                 InputStream inputStream = ClassLoader.getSystemResourceAsStream(fileName);
@@ -51,6 +63,7 @@ public class HttpRequest implements Runnable {
                     file = new File(ClassLoader.getSystemResource(fileName).toURI());
                 } else {
                     status = "404 Not Found";
+                    fileName = "./404.html";
                     inputStream = ClassLoader.getSystemResourceAsStream("./404.html");
                     file = new File(ClassLoader.getSystemResource("./404.html").toURI());
                 }
